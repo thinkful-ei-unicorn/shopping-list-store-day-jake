@@ -2,10 +2,10 @@
 
 const store = {
   items: [
-    { id: cuid(), name: 'apples', checked: false },
-    { id: cuid(), name: 'oranges', checked: false },
-    { id: cuid(), name: 'milk', checked: true },
-    { id: cuid(), name: 'bread', checked: false },
+    { id: cuid(), name: 'apples', checked: false, editing: false },
+    { id: cuid(), name: 'oranges', checked: false, editing: false },
+    { id: cuid(), name: 'milk', checked: true, editing: false },
+    { id: cuid(), name: 'bread', checked: false, editing: false },
   ],
   hideCheckedItems: false,
 };
@@ -16,6 +16,30 @@ const generateItemElement = function (item) {
     itemTitle = `
      <span class='shopping-item'>${item.name}</span>
     `;
+  }
+
+  if (item.editing) {
+    console.log('editing true');
+    return `
+    <li class='js-item-element' data-item-id='${item.id}'>
+      ${itemTitle}
+      <div class='shopping-item-controls'>
+        <button class='shopping-item-toggle js-item-toggle'>
+          <span class='button-label'>check</span>
+        </button>
+        <button class='shopping-item-delete js-item-delete'>
+          <span class='button-label'>delete</span>
+        </button>
+        </button>
+        <button class='shopping-item-edit js-item-edit'>
+          <span class='button-label'>Edit Item Name</span>
+        </button>
+        <div class='item-edit-section'>
+          <input type="text" name="shopping-list-edit-item" class="js-shopping-list-new-item-name" value="${item.name}">
+          <button class='js-item-edit-submit'>Edit</button>
+        </div>
+      </div>
+    </li>`;
   }
 
   return `
@@ -32,11 +56,6 @@ const generateItemElement = function (item) {
         <button class='shopping-item-edit js-item-edit'>
           <span class='button-label'>Edit Item Name</span>
         </button>
-        <div class='item-edit-section hideMe'>
-          <input type="text" name="shopping-list-edit-item" class="js-shopping-list-new-item-name" value="${item.name}">
-          <button class='js-item-edit-submit'>Edit</button>
-        </div>
-      </div>
     </li>`;
 };
 
@@ -73,7 +92,12 @@ const render = function () {
 };
 
 const addItemToShoppingList = function (itemName) {
-  store.items.push({ id: cuid(), name: itemName, checked: false });
+  store.items.push({
+    id: cuid(),
+    name: itemName,
+    checked: false,
+    editing: false,
+  });
 };
 
 const handleNewItemSubmit = function () {
@@ -181,11 +205,14 @@ const handleItemEdit = function () {
   $('.js-shopping-list').on('click', '.shopping-item-edit', (event) => {
     // console.log('item edit click registered');
 
-    // toggle class hideMe on this object
+    const id = getItemIdFromElement(event.currentTarget);
 
-    // console.log($(event.currentTarget).next('div').attr('class'));
-
-    $(event.currentTarget).next('div').toggleClass('hideMe');
+    for (let item of store.items) {
+      if (item.id === id) {
+        item.editing = !item.editing;
+      }
+    }
+    render();
   });
 };
 
@@ -196,13 +223,16 @@ const handleItemEditSubmit = function () {
     // console.log('item edit SUBMIT click registered');
 
     let newName = $(event.currentTarget).siblings('input').val();
-    console.log(newName);
 
     const id = getItemIdFromElement(event.currentTarget);
-    console.log(id);
 
     editStoreItem(id, newName);
 
+    for (let item of store.items) {
+      if (item.id === id) {
+        item.editing = !item.editing;
+      }
+    }
     render();
   });
 };
